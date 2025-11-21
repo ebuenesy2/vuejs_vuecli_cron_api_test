@@ -1,12 +1,11 @@
 <template>
   <div class="cron-monitor">
-    <h2>API Cron Monitor</h2>
+    <h2>API Cron Monitor | Son Güncelleme: {{ lastUpdate }}</h2>
 
     <div class="controls">
       <button @click="manualRun" :disabled="loadingRun">
         {{ loadingRun ? "Çalıştırılıyor..." : "Manuel Test" }}
       </button>
-      <span v-if="lastUpdate">Son güncelleme: {{ lastUpdate }}</span>
     </div>
 
     <div class="tables">
@@ -22,9 +21,9 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="item in success.data" :key="'s-'+item.id">
+            <tr v-for="item in success.data" :key="'s-'+item.id" class="success-row">
               <td>{{ item.id }}</td>
-              <td>{{ item.timestamp }}</td>
+              <td>{{ formatTime(item.timestamp) }}</td>
               <td><pre>{{ pretty(item.data) }}</pre></td>
             </tr>
           </tbody>
@@ -43,7 +42,7 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="item in error.data" :key="'e-'+item.id">
+            <tr v-for="item in error.data" :key="'e-'+item.id" class="error-row">
               <td>{{ item.id }}</td>
               <td>{{ formatTime(item.timestamp) }}</td>
               <td><pre>{{ pretty(item.data) }}</pre></td>
@@ -66,21 +65,8 @@ export default {
     const loadingRun = ref(false);
     const lastUpdate = ref("");
 
-    const success = reactive({
-      page: 1,
-      limit: 10,
-      total: 0,
-      totalPages: 0,
-      data: [],
-    });
-
-    const error = reactive({
-      page: 1,
-      limit: 10,
-      total: 0,
-      totalPages: 0,
-      data: [],
-    });
+    const success = reactive({ page: 1, limit: 10, total: 0, totalPages: 0, data: [] });
+    const error = reactive({ page: 1, limit: 10, total: 0, totalPages: 0, data: [] });
 
     let intervalId = null;
 
@@ -104,7 +90,8 @@ export default {
 
     const fetchAll = async () => {
       await Promise.all([fetchSuccess(), fetchError()]);
-      lastUpdate.value = new Date().toLocaleTimeString();
+      lastUpdate.value = dayjs().format('DD.MM.YYYY HH:mm:ss');
+      document.title = `API Test | Son Güncelleme: ${lastUpdate.value}`;
     };
 
     const manualRun = async () => {
@@ -121,19 +108,17 @@ export default {
 
     onMounted(() => {
       fetchAll();
-      intervalId = setInterval(fetchAll, 60000); // 1 dakikada bir yenile
+      intervalId = setInterval(fetchAll, 60000); // her dakika yenile
     });
 
     onUnmounted(() => {
       if (intervalId) clearInterval(intervalId);
     });
 
+    const formatTime = (ts) => dayjs(ts).format('DD.MM.YYYY HH:mm:ss');
     const pretty = (obj) => {
-      try {
-        return JSON.stringify(obj, null, 2);
-      } catch {
-        return String(obj);
-      }
+      try { return JSON.stringify(obj, null, 2); }
+      catch { return String(obj); }
     };
 
     return {
@@ -142,13 +127,9 @@ export default {
       loadingRun,
       lastUpdate,
       manualRun,
-      pretty,
+      formatTime,
+      pretty
     };
-  },
-  methods: {
-    formatTime(ts) {
-      return dayjs(ts).format('DD.MM.YYYY HH:mm:ss');
-    }
   }
 };
 </script>
@@ -214,4 +195,8 @@ pre {
   word-break: break-word;
   margin: 0;
 }
+
+/* Satır renkleri */
+.success-row { background-color: #e6ffed; } /* açık yeşil */
+.error-row { background-color: #ffe6e6; } /* açık kırmızı */
 </style>
