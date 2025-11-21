@@ -26,6 +26,11 @@ npm run serve
 http://localhost:8080/
 ```
 
+## Proje Çalıştırma Sitesi
+```sh
+https://vuejs-vuecli-cron-api-test.vercel.app/
+```
+
 ### Build Yapma
 ```sh
 npm run build
